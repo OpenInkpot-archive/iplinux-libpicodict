@@ -1,4 +1,4 @@
-Source: picodict
+Source: libpicodict
 Section: core
 Maintainer: Mikhail Gusarov <dottedmag@dottedmag.net>
 Build-Depends: debhelper (>= 7), libtool, automake, pkg-config, zlib1g-dev
