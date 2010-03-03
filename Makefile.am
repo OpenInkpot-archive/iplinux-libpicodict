@@ -5,6 +5,7 @@ include_HEADERS = libpicodict.h
 lib_LTLIBRARIES = libpicodict.la
 libpicodict_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libpicodict_la_SOURCES = libpicodict.c
+libpicodict_la_LIBADD =  $(LTLIBOBJS)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libpicodict.pc
