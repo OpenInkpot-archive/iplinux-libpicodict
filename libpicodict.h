@@ -44,10 +44,10 @@ typedef enum {
 
 /*
  * Given index file and data file opens it and returns newly created
- * pd_dictionary. Returns NULL if there was error during opening the
- * dictionary. Sort mode should be obtained from pd_validate.
+ * pd_dictionary. Returns NULL if there was error while opening the
+ * dictionary. Sort mode should be obtained from pd_validate().
  *
- * Returned object is to be closed by passing into pd_close().
+ * Returned object is to be disposed by passing into pd_close().
  */
 pd_dictionary *
 pd_open(const char *index_file, const char *data_file, pd_sort_mode sort_mode);
@@ -55,13 +55,15 @@ pd_open(const char *index_file, const char *data_file, pd_sort_mode sort_mode);
 /*
  * Returns name of dictionary as stored inside it. Returned string is to be
  * freed by caller.
+ *
+ * Returns NULL if there is no name attached to dictionary.
  */
 char *
 pd_name(pd_dictionary *d);
 
 /*
  * Looks for given word and returns result. Result is to be freed by passing
- * pd_result_free().
+ * into pd_result_free().
  *
  * Returns NULL if result is empty.
  */
@@ -69,7 +71,10 @@ pd_result *
 pd_find(pd_dictionary *d, const char *text, pd_find_mode options);
 
 /*
- * Deallocates all resources bound to passed dictionary object.
+ * Deallocates passed dictionary object.
+ *
+ * All pd_result objects should be freed before before closing dictionary, as
+ * they use data stored inside dictionary object.
  */
 void
 pd_close(pd_dictionary *d);
@@ -84,7 +89,7 @@ pd_result_article(pd_result *r, size_t *size);
 
 /*
  * Advances to next dictionary article from result. Returned is new pd_result
- * object, don't forget to free passed one when finished working with it.
+ * object, so don't forget to free passed one when finished working with it.
  *
  * If there is no next dictionary article, NULL is returned.
  */
@@ -92,7 +97,7 @@ pd_result *
 pd_result_next(pd_result *r);
 
 /*
- * Frees all resources bound to dictionary result object.
+ * Frees result object.
  */
 void
 pd_result_free(pd_result *r);
@@ -100,16 +105,19 @@ pd_result_free(pd_result *r);
 /* -- Testing validity of files -- */
 
 /*
- * Applications ought to check validity of dictionaries at first time and obtain
- * sorting function to be passed later to pd_open().
+ * Applications ought to check validity of dictionary files once, obtain sorting
+ * function to be passed later to pd_open() and store this data.
  *
- * It is strongly advised to checksum both index and data file and re-validate
- * dictionary if contents changes.
+ * Also it is strongly advised to checksum both index and data file and
+ * re-validate dictionary if contents changes.
+ *
+ * Note that pd_validate() is a CPU-heavy function and should not be called
+ * every time dictionary is being open!
  */
 
 /*
- * Given index file and data file validates it and obtains sort mode to be used
- * sorting functionwith this dictionary.
+ * Given index file and data file validates them and detects sort mode to be
+ * passed into pd_open().
  */
 pd_sort_mode
 pd_validate(const char *index_file, const char *data_file);
