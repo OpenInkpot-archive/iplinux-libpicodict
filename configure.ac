@@ -6,6 +6,5 @@ AC_PROG_CC_C99
 AM_PROG_LIBTOOL
 
 AC_CHECK_LIB([z], [inflate])
-AC_REPLACE_FUNCS([le16toh])
 
 AC_OUTPUT([Makefile libpicodict.pc])

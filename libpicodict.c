@@ -30,6 +30,21 @@
 
 #include <zlib.h>
 
+/* Older glibc don't have it */
+#ifndef le16toh
+uint16_t le16toh(uint16_t arg)
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+    return arg;
+#elif BYTE_ORDER == BIG_ENDIAN
+    return __bswap_16(arg);
+#else
+#  error Unknown byte order!
+#endif
+}
+#endif
+
+
 #define CHUNK_CACHE_SIZE 3
 
 typedef struct {
