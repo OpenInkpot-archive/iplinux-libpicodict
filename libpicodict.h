@@ -107,12 +107,6 @@ pd_result_free(pd_result *r);
  * dictionary if contents changes.
  */
 
-typedef enum {
-    PICODICT_VALIDATE_OK,
-    PICODICT_VALIDATE_FORMAT, /* Invalid file format */
-    PICODICT_VALIDATE_SORTING_UNKNOWN /* Unable to guess sorting function */
-} pd_validation_result;
-
 /*
  * Given index file and data file validates it and obtains sort mode to be used
  * sorting functionwith this dictionary.
