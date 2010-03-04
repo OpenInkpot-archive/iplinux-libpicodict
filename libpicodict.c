@@ -777,14 +777,23 @@ pd_name(pd_dictionary *d)
     size_t size;
     const char *article = pd_result_article(res, &size);
 
-    /* Ugh. C! */
-    const char *nl = nextline(article);
-    while (isspace(*nl)) nl++;
-    const char *endl = strchr(nl, '\n');
+    char *str;
+    if (!strcmp(article, "00-database-short\n")
+        || !strcmp(article, "00databaseshort\n")) {
+        /* Skip first line and indentation */
+        const char *nl = nextline(article);
+        while (isspace(*nl)) nl++;
+        const char *endl = strchr(nl, '\n');
 
-    char *str = malloc(endl - nl + 1);
-    strncpy(str, nl, endl - nl);
-    str[endl - nl] = 0;
+        str = malloc(endl - nl + 1);
+        strncpy(str, nl, endl - nl);
+        str[endl - nl] = '\0';
+    } else {
+        /* Whole article is description */
+        str = malloc(size + 1);
+        strncpy(str, article, size);
+        str[size] = '\0';
+    }
 
     pd_result_free(res);
 
