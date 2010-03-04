@@ -419,11 +419,17 @@ enum {
     DZIP_SI2 = 0x41,
 };
 
-static bool
+typedef enum {
+    DZ_NOT_FOUND = -1,
+    DZ_OK,
+    DZ_ERROR,
+} dz_parse_result;
+
+static dz_parse_result
 parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
 {
     if (size < 12)
-        return false;
+        return DZ_NOT_FOUND;
 
     int compression = file[2];
     int flags = file[3];
@@ -432,26 +438,26 @@ parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
     /* Basic info */
 
     if (file[0] != GZIP_ID1 || file[1] != GZIP_ID2 || compression != 8)
-        return false;
+        return DZ_NOT_FOUND;
 
     /* 'extra' field */
 
     if (!(flags & GZIP_FEXTRA))
-        return false;
+        return DZ_ERROR;
 
     if (size < 12 + xlen)
-        return false;
+        return DZ_ERROR;
 
     if (file[12] != DZIP_SI1 || file[13] != DZIP_SI2)
-        return false;
+        return DZ_ERROR;
 
     unsigned slen = le16toh(*(unsigned short *)(file + 14));
     if (slen != xlen - 4)
-        return false;
+        return DZ_ERROR;
 
     unsigned sver = le16toh(*(unsigned short *)(file + 16));
     if (sver != 1)
-        return false;
+        return DZ_ERROR;
 
     dict->chunk_length = le16toh(*(unsigned short *)(file + 18));
     dict->chunk_count = le16toh(*(unsigned short *)(file + 20));
@@ -463,19 +469,19 @@ parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
         while (data_offset < size && file[data_offset] != '\0') data_offset++;
         data_offset++;
         if (data_offset >= size)
-            return false;
+            return DZ_ERROR;
     }
     if (flags & GZIP_FCOMMENT) {
         while (data_offset < size && file[data_offset] != '\0') data_offset++;
         data_offset++;
         if (data_offset >= size)
-            return false;
+            return DZ_ERROR;
     }
     if (flags & GZIP_FHCRC)
         data_offset += 2;
 
     if (data_offset >= size)
-        return false;
+        return DZ_ERROR;
 
     /* chunks extra data */
 
@@ -489,10 +495,10 @@ parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
 
     if (data_offset >= size + 1) { /* data_offset might be == size */
         free(dict->chunk_offsets);
-        return false;
+        return DZ_ERROR;
     }
 
-    return true;
+    return DZ_OK;
 }
 
 /*
@@ -539,7 +545,11 @@ pd_open(const char *index_file, const char *data_file, pd_sort_mode mode)
     if (!dict->data)
         goto err2;
 
-    if (parse_dz_header(dict, dict->data, dict->data_size)) {
+    dz_parse_result res = parse_dz_header(dict, dict->data, dict->data_size);
+    if (res == DZ_ERROR)
+        goto err3;
+
+    if (res == DZ_OK) {
         dict->z.zalloc = Z_NULL;
         dict->z.zfree = Z_NULL;
         dict->z.opaque = Z_NULL;
