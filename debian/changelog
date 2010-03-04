@@ -1,3 +1,11 @@
+libpicodict (0.1.1) zelazny; urgency=low
+
+  * Fix crash on some 00-database-short entries
+  * Extend comments in header file
+  * Fix compilation with newer glibc
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Thu, 04 Mar 2010 22:39:50 +0600
+
 libpicodict (0.1) zelazny; urgency=low
 
   * Initial release.
