@@ -93,7 +93,7 @@ typedef int (*_pd_cmp)(const char *lhs, const char *rhs);
 /* -- Search -- */
 
 /*
- * find_entry() searches for interval of entries starting with given prefix
+ * _find_entry() searches for interval of entries starting with given prefix
  * ('yr' => 'yraft' .. 'yronne')
  *
  * 0. Entries are supposed to be sorted wrt passed comparison function.
@@ -225,19 +225,19 @@ _pd_strdictcmp(const unsigned char *lhs, const unsigned char *rhs)
 }
 
 static const char *
-nextline(const char *c)
+_nextline(const char *c)
 {
     return strchr(c, '\n') + 1;
 }
 
 static const char *
-lower_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
+_lower_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
 {
     const char *middle = start + (end - start)/2;
     /* looking for the start of line */
     while (middle > start && middle[-1] != '\n') middle--;
 
-    const char *next = nextline(middle);
+    const char *next = _nextline(middle);
 
     /* If we've got a single line, then we've found it */
     if (middle == start && next == end)
@@ -245,7 +245,7 @@ lower_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
 
     int c = (*cmp)(prefix, middle);
     if (c > 0)
-        return lower_bound(cmp, prefix, next, end);
+        return _lower_bound(cmp, prefix, next, end);
 
     /* Check that middle is not last line. Without this check we'd go into
      * infinite loop, as we'd call ourself with the same arguments. To avoid
@@ -264,14 +264,14 @@ lower_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
          if (c > 0)
              return middle;
 
-         return lower_bound(cmp, prefix, start, middle);
+         return _lower_bound(cmp, prefix, start, middle);
     }
 
-    return lower_bound(cmp, prefix, start, next);
+    return _lower_bound(cmp, prefix, start, next);
 }
 
 static const char *
-upper_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
+_upper_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
 {
     if (start == end)
         return start;
@@ -279,11 +279,11 @@ upper_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
     const char *middle = start + (end - start)/2;
     while (middle > start && middle[-1] != '\n') middle--;
 
-    const char *next = nextline(middle);
+    const char *next = _nextline(middle);
 
     int c = (*cmp)(prefix, middle);
     if (c == 0)
-        return upper_bound(cmp, prefix, next, end);
+        return _upper_bound(cmp, prefix, next, end);
 
     /*
      * Check that middle is not a last line. Without this check we'd go into
@@ -298,14 +298,14 @@ upper_bound(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
         if (c == 0)
             return middle;
 
-        return upper_bound(cmp, prefix, start, middle);
+        return _upper_bound(cmp, prefix, start, middle);
     }
 
-    return upper_bound(cmp, prefix, start, next);
+    return _upper_bound(cmp, prefix, start, next);
 }
 
 static _pd_interval
-find_entry(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
+_find_entry(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
 {
     _pd_interval res = {};
 
@@ -315,12 +315,12 @@ find_entry(_pd_cmp cmp, const char *prefix, const char *start, const char *end)
         /* looking for the start of line */
         while (middle > start && middle[-1] != '\n') middle--;
 
-        const char *next = nextline(middle);
+        const char *next = _nextline(middle);
 
         int c = (*cmp)(prefix, middle);
         if (c == 0) {
-            res.lower = lower_bound(cmp, prefix, start, next);
-            res.upper = upper_bound(cmp, prefix, next, end);
+            res.lower = _lower_bound(cmp, prefix, start, next);
+            res.upper = _upper_bound(cmp, prefix, next, end);
             break;
         }
 
@@ -427,7 +427,7 @@ typedef enum {
 } dz_parse_result;
 
 static dz_parse_result
-parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
+_parse_dz_header(pd_dictionary *dict, const unsigned char *file, size_t size)
 {
     if (size < 12)
         return DZ_NOT_FOUND;
@@ -546,7 +546,7 @@ pd_open(const char *index_file, const char *data_file, pd_sort_mode mode)
     if (!dict->data)
         goto err2;
 
-    dz_parse_result res = parse_dz_header(dict, dict->data, dict->data_size);
+    dz_parse_result res = _parse_dz_header(dict, dict->data, dict->data_size);
     if (res == DZ_ERROR)
         goto err3;
 
@@ -603,7 +603,7 @@ pd_close(pd_dictionary *dict)
 /* -- Resultset -- */
 
 static bool
-is_base64_sym(int c)
+_is_base64_sym(int c)
 {
     return ('A' <= c && c <= 'Z')
         || ('a' <= c && c <= 'z')
@@ -612,10 +612,10 @@ is_base64_sym(int c)
 }
 
 static unsigned
-base64_decode(const char *str)
+_base64_decode(const char *str)
 {
     unsigned n = 0;
-    for (char c = *str++; is_base64_sym(c); c = *str++) {
+    for (char c = *str++; _is_base64_sym(c); c = *str++) {
         n <<= 6;
         if ('A' <= c && c <= 'Z') n += c - 'A';
         else if ('a' <= c && c <= 'z') n += c - 'a' + 26;
@@ -655,19 +655,19 @@ _parse_index_line(const char *line, const char *end)
         return ret;
     const char *pos = endname + 1;
     const char *endpos = pos;
-    while (endpos < end && is_base64_sym(*endpos)) endpos++;
+    while (endpos < end && _is_base64_sym(*endpos)) endpos++;
     if (endpos == end || endpos == pos || *endpos != '\t')
         return ret;
     const char *len = endpos + 1;
     const char *endlen = len;
-    while (endlen < end && is_base64_sym(*endlen)) endlen++;
+    while (endlen < end && _is_base64_sym(*endlen)) endlen++;
     if (endlen == end || endlen == len || *endlen != '\n')
         return ret;
 
     ret.name = line;
     ret.endname = endname;
-    ret.article_offset = base64_decode(pos);
-    ret.article_length = base64_decode(len);
+    ret.article_offset = _base64_decode(pos);
+    ret.article_length = _base64_decode(len);
     ret.nextline = endlen + 1;
     return ret;
 }
@@ -764,7 +764,7 @@ static _pd_interval
 _advance_to_next_entry(_pd_interval i)
 {
     _pd_interval ret = {
-        .lower = nextline(i.lower),
+        .lower = _nextline(i.lower),
         .upper = i.upper
     };
     return ret;
@@ -773,11 +773,11 @@ _advance_to_next_entry(_pd_interval i)
 char *
 pd_name(pd_dictionary *d)
 {
-    _pd_interval i = find_entry((_pd_cmp)_pd_strcmp, "00-database-short",
-                                d->index, d->index + d->index_size);
+    _pd_interval i = _find_entry((_pd_cmp)_pd_strcmp, "00-database-short",
+                                 d->index, d->index + d->index_size);
     if (i.lower == i.upper) {
-        i = find_entry((_pd_cmp)_pd_strcmp, "00databaseshort",
-                       d->index, d->index + d->index_size);
+        i = _find_entry((_pd_cmp)_pd_strcmp, "00databaseshort",
+                        d->index, d->index + d->index_size);
         if (i.lower == i.upper) {
             return NULL;
         }
@@ -792,7 +792,7 @@ pd_name(pd_dictionary *d)
     if (!strcmp(article, "00-database-short\n")
         || !strcmp(article, "00databaseshort\n")) {
         /* Skip first line and indentation */
-        const char *nl = nextline(article);
+        const char *nl = _nextline(article);
         while (isspace(*nl)) nl++;
         const char *endl = strchr(nl, '\n');
 
@@ -831,7 +831,7 @@ pd_find(pd_dictionary *d, const char *text, pd_find_mode options)
         return NULL;
     }
 
-    _pd_interval i = find_entry(cmp, text, d->index, d->index + d->index_size);
+    _pd_interval i = _find_entry(cmp, text, d->index, d->index + d->index_size);
     if (i.lower == i.upper)
         return NULL;
 
