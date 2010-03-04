@@ -33,7 +33,8 @@
 
 /* Older glibc don't have it */
 #ifndef le16toh
-uint16_t le16toh(uint16_t arg)
+static uint16_t
+le16toh(uint16_t arg)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
     return arg;
