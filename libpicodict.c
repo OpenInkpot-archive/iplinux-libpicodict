@@ -789,8 +789,8 @@ pd_name(pd_dictionary *d)
     const char *article = pd_result_article(res, &size);
 
     char *str;
-    if (!strcmp(article, "00-database-short\n")
-        || !strcmp(article, "00databaseshort\n")) {
+    if (!strncmp(article, "00-database-short\n", 18)
+        || !strncmp(article, "00databaseshort\n", 16)) {
         /* Skip first line and indentation */
         const char *nl = _nextline(article);
         while (isspace(*nl)) nl++;
