@@ -1,3 +1,13 @@
+libpicodict (0.1.2) zelazny; urgency=low
+
+  * Fixed problem with malformed compressed dictionary file treated as
+    uncompressed dictionary.
+  * Fixed problem with returning dictionary name with auxiliary
+    information.
+  * Code cleanups.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Sat, 06 Mar 2010 20:16:15 +0600
+
 libpicodict (0.1.1) zelazny; urgency=low
 
   * Fix crash on some 00-database-short entries
