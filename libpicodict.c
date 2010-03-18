@@ -126,14 +126,16 @@ typedef int (*_pd_cmp)(const char *lhs, const char *rhs);
  * Check whether str starts with prefix
  */
 static int
-_pd_strprefixcmp(const unsigned char *prefix, const unsigned char *str)
+_pd_strprefixcasecmp(const unsigned char *prefix, const unsigned char *str)
 {
     while (*prefix) {
-        if (*str == '\t')
+        unsigned char prefixc = tolower(*prefix);
+        unsigned char strc = tolower(*str);
+        if (strc == '\t')
             return 1;
-        if (*prefix < *str)
+        if (prefixc < strc)
             return -1;
-        if (*prefix > *str)
+        if (prefixc > strc)
             return 1;
         str++;
         prefix++;
@@ -175,14 +177,16 @@ _pd_strprefixdictcmp(const unsigned char* prefix, const unsigned char *str)
  * Checks whether lhs equals rhs. rhs and lhs may be \t-terminated.
  */
 static int
-_pd_strcmp(const unsigned char *lhs, const unsigned char *rhs)
+_pd_strcasecmp(const unsigned char *lhs, const unsigned char *rhs)
 {
     for (;;) {
-        if ((!*lhs || *lhs == '\t') && (!*rhs || *rhs == '\t')) return 0;
-        if (!*lhs || *lhs == '\t') return -1;
-        if (!*rhs || *rhs == '\t') return 1;
-        if (*lhs < *rhs) return -1;
-        if (*lhs > *rhs) return 1;
+        unsigned char lhsc = tolower(*lhs);
+        unsigned char rhsc = tolower(*rhs);
+        if ((!lhsc || lhsc == '\t') && (!rhsc || rhsc == '\t')) return 0;
+        if (!lhsc || lhsc == '\t') return -1;
+        if (!rhsc || rhsc == '\t') return 1;
+        if (lhsc < rhsc) return -1;
+        if (lhsc > rhsc) return 1;
         lhs++;
         rhs++;
     }
@@ -773,10 +777,10 @@ _advance_to_next_entry(_pd_interval i)
 char *
 pd_name(pd_dictionary *d)
 {
-    _pd_interval i = _find_entry((_pd_cmp)_pd_strcmp, "00-database-short",
+    _pd_interval i = _find_entry((_pd_cmp)_pd_strcasecmp, "00-database-short",
                                  d->index, d->index + d->index_size);
     if (i.lower == i.upper) {
-        i = _find_entry((_pd_cmp)_pd_strcmp, "00databaseshort",
+        i = _find_entry((_pd_cmp)_pd_strcasecmp, "00databaseshort",
                         d->index, d->index + d->index_size);
         if (i.lower == i.upper) {
             return NULL;
@@ -819,9 +823,9 @@ pd_find(pd_dictionary *d, const char *text, pd_find_mode options)
 
     if (d->mode == PICODICT_SORT_ALPHABET) {
         if (options == PICODICT_FIND_EXACT)
-            cmp = (_pd_cmp)_pd_strcmp;
+            cmp = (_pd_cmp)_pd_strcasecmp;
         else
-            cmp = (_pd_cmp)_pd_strprefixcmp;
+            cmp = (_pd_cmp)_pd_strprefixcasecmp;
     } else if (d->mode == PICODICT_SORT_SKIPUNALPHA) {
         if (options == PICODICT_FIND_EXACT)
             cmp = (_pd_cmp)_pd_strdictcmp;
@@ -887,7 +891,7 @@ _pd_validate_index(void *index, size_t index_size, size_t data_size)
     memset(sort_valid, true, sizeof(sort_valid));
 
     _pd_cmp sort[SORT_COUNT] = { /* Those should match pd_sort_mode */
-        (_pd_cmp)_pd_strcmp,
+        (_pd_cmp)_pd_strcasecmp,
         (_pd_cmp)_pd_strdictcmp,
     };
 
@@ -911,9 +915,10 @@ _pd_validate_index(void *index, size_t index_size, size_t data_size)
         /* Check sorting */
         if (prev_name)
             for (int i = 0; i < SORT_COUNT; ++i)
-                if (sort_valid[i])
+                if (sort_valid[i]) {
                     if ((*sort[i])(prev_name, line.name) > 0)
                         sort_valid[i] = false;
+                }
         /* Stop if finished */
         if (line.nextline == index + index_size)
             break;
