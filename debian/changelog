@@ -1,3 +1,9 @@
+libpicodict (0.1.3) zelazny; urgency=low
+
+  * Fixed one of sorting modes to be canse-insensitive.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Thu, 18 Mar 2010 22:43:47 +0600
+
 libpicodict (0.1.2) zelazny; urgency=low
 
   * Fixed problem with malformed compressed dictionary file treated as
