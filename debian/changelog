@@ -1,3 +1,11 @@
+libpicodict (0.1.4) zelazny; urgency=low
+
+  * Added function pd_pd_get_sort_mode
+  * Rewrite pd_validate
+  * Bump soname and package version
+
+ -- Alexander Kerner <lunohod@openinkpot.org>  Thu, 20 May 2010 21:34:27 +0200
+
 libpicodict (0.1.3) zelazny; urgency=low
 
   * Fixed one of sorting modes to be canse-insensitive.
