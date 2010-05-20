@@ -7,7 +7,7 @@ XCS-Cross-Build-Depends: libz1-dev
 Priority: optional
 Standards-Version: 3.8.3
 
-Package: libpicodict0
+Package: libpicodict1
 Architecture: any
 Depends: ${shlibs:Depends}
 Description: dict format support library
@@ -22,7 +22,7 @@ Description: dict format support library
 Package: libpicodict-dev
 Architecture: any
 Section: libdevel
-Depends: libpicodict0 (= ${binary:Version})
+Depends: libpicodict1 (= ${binary:Version})
 Description: dict format support library -- development files
  PicoDict is .dict dictionary format reading library.
  .
@@ -34,10 +34,10 @@ Description: dict format support library -- development files
  .
  This package contains development files for picodict.
 
-Package: libpicodict0-dbg
+Package: libpicodict1-dbg
 Architecture: any
 Section: debug
-Depends: libpicodict0 (= ${binary:Version})
+Depends: libpicodict1 (= ${binary:Version})
 Description: dict format support library -- debug symbols
  PicoDict is .dict dictionary format reading library.
  .
