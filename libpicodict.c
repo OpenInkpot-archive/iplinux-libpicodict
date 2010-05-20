@@ -932,20 +932,32 @@ _pd_validate_index(void *index, size_t index_size, size_t data_size)
     return PICODICT_SORT_UNKNOWN;
 }
 
-pd_sort_mode
-pd_validate(const char *index_file, const char *data_file)
+static pd_dict_stat
+_pd_check_data(pd_dictionary *d)
 {
-    /* Open files && check .dict.dz header */
-    pd_dictionary *d = pd_open(index_file, data_file, -1);
-    if (!d)
-        return PICODICT_DATA_MALFORMED;
-
-    size_t data_size; /* Uncompressed */
-
-    /* Test-decompress .dict.dz. */
     if (d->compressed) {
         char *tmp = malloc(d->chunk_length);
-        for(int i = 0; i < d->chunk_count; ++i) {
+        for (int i = 0; i < d->chunk_count; ++i) {
+            if (!_uncompress_chunk(d, i, tmp)) {
+                free(tmp);
+                return PICODICT_INVALID;
+            }
+        }
+        free(tmp);
+    }
+
+    return PICODICT_OK;
+}
+
+static size_t
+_pd_data_size(pd_dictionary *d)
+{
+    size_t data_size;
+
+    if (d->compressed) {
+        data_size = d->chunk_count * d->chunk_length;
+        if (d->chunk_count > 0) {
+            char *tmp = malloc(d->chunk_length);
             int i = d->chunk_count - 1;
             d->z.next_in = d->data + d->chunk_offsets[i];
             d->z.avail_in = d->chunk_offsets[i+1] - d->chunk_offsets[i];
@@ -953,24 +965,39 @@ pd_validate(const char *index_file, const char *data_file)
             d->z.avail_out = d->chunk_length;
 
             int ret = inflate(&d->z, Z_PARTIAL_FLUSH);
-            if (ret != Z_OK && ret != Z_STREAM_END) {
-                free(tmp);
-                pd_close(d);
-                return PICODICT_DATA_MALFORMED;
-            }
-        }
-        /* Calculate full length of data */
-        data_size = d->chunk_count * d->chunk_length - d->z.avail_out;
+            free(tmp);
+            if (ret != Z_OK && ret != Z_STREAM_END)
+                return 0;
 
-        free(tmp);
-    } else {
+            data_size -= d->z.avail_out;
+        }
+    } else
         data_size = d->data_size;
-    }
+
+    return data_size;
+}
+
+pd_dict_stat
+pd_validate(const char *index_file, const char *data_file)
+{
+    /* Open files && check .dict.dz header */
+    pd_dictionary *d = pd_open(index_file, data_file, -1);
+    if (!d)
+        return PICODICT_INVALID;
+
+    if (_pd_check_data(d) != PICODICT_OK)
+        goto err;
 
     /* Validate index (syntax, boundaries, sorting) */
-    pd_sort_mode ret = _pd_validate_index(d->index, d->index_size, data_size);
+    if (_pd_validate_index(d->index, d->index_size, _pd_data_size(d)) < 0)
+        goto err;
+
     pd_close(d);
-    return ret;
+    return PICODICT_OK;
+
+err:
+    pd_close(d);
+    return PICODICT_INVALID;
 }
 
 pd_sort_mode
@@ -981,35 +1008,9 @@ pd_get_sort_mode(const char *index_file, const char *data_file)
     if (!d)
         return PICODICT_DATA_MALFORMED;
 
-    size_t data_size; /* Uncompressed */
+    pd_sort_mode ret =
+        _pd_validate_index(d->index, d->index_size, _pd_data_size(d));
 
-    if (d->compressed) {
-        /* Check only last chunk */
-        char *tmp = malloc(d->chunk_length);
-        if(d->chunk_count > 0) {
-            int i = d->chunk_count - 1;
-            d->z.next_in = d->data + d->chunk_offsets[i];
-            d->z.avail_in = d->chunk_offsets[i+1] - d->chunk_offsets[i];
-            d->z.next_out = (unsigned char *)tmp;
-            d->z.avail_out = d->chunk_length;
-
-            int ret = inflate(&d->z, Z_PARTIAL_FLUSH);
-            if (ret != Z_OK && ret != Z_STREAM_END) {
-                free(tmp);
-                pd_close(d);
-                return PICODICT_DATA_MALFORMED;
-            }
-        }
-        /* Calculate full length of data */
-        data_size = d->chunk_count * d->chunk_length - d->z.avail_out;
-
-        free(tmp);
-    } else {
-        data_size = d->data_size;
-    }
-
-    /* Validate index (syntax, boundaries, sorting) */
-    pd_sort_mode ret = _pd_validate_index(d->index, d->index_size, data_size);
     pd_close(d);
     return ret;
 }

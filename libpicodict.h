@@ -31,6 +31,11 @@ typedef struct pd_result pd_result;
 /* -- Dictionary -- */
 
 typedef enum {
+    PICODICT_INVALID = -1,
+    PICODICT_OK,
+} pd_dict_stat;
+
+typedef enum {
     PICODICT_FIND_EXACT,
     PICODICT_FIND_STARTS_WITH,
 } pd_find_mode;
@@ -116,15 +121,13 @@ pd_result_free(pd_result *r);
  */
 
 /*
- * Given index file and data file validates them and detects sort mode to be
- * passed into pd_open().
+ * Given index file and data file validates them
  */
-pd_sort_mode
+pd_dict_stat
 pd_validate(const char *index_file, const char *data_file);
 
 /*
- * This function validates the index file and detects sort mode to be
- * passed into pd_open().
+ * This function detects sort mode to be passed into pd_open().
  */
 pd_sort_mode
 pd_get_sort_mode(const char *index_file, const char *data_file);
