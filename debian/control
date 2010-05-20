@@ -1,6 +1,7 @@
 Source: libpicodict
 Section: core
 Maintainer: Mikhail Gusarov <dottedmag@dottedmag.net>
+Uploaders: Alexander Kerner <lunohod@openinkpot.org>
 Build-Depends: debhelper (>= 7), libtool, automake, pkg-config, zlib1g-dev
 XCS-Cross-Host-Build-Depends: debhelper (>= 7), libtool, automake, pkg-config
 XCS-Cross-Build-Depends: libz1-dev
