@@ -122,4 +122,11 @@ pd_result_free(pd_result *r);
 pd_sort_mode
 pd_validate(const char *index_file, const char *data_file);
 
+/*
+ * This function validates the index file and detects sort mode to be
+ * passed into pd_open().
+ */
+pd_sort_mode
+pd_get_sort_mode(const char *index_file, const char *data_file);
+
 #endif
